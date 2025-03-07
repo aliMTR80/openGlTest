@@ -829,7 +829,19 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(viewMatrix, 0);
         Matrix.translateM(viewMatrix, 0, 0f, 0f, zoom);
 
+
+
         if (!is2DMode) {
+            // اعمال مقیاس‌بندی Z
+            float scaleZ = 0.015f; // مقدار مقیاس‌بندی برای محور Z
+            float[] scaleMatrix = new float[16];
+            Matrix.setIdentityM(scaleMatrix, 0);
+            Matrix.scaleM(scaleMatrix, 0, 1f, 1f, scaleZ);
+            Matrix.multiplyMM(modelMatrix, 0, scaleMatrix, 0, modelMatrix, 0);
+
+            // محاسبه ماتریس نهایی MVP
+            Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
+            Matrix.multiplyMM(mvpMatrix, 0, mvpMatrix, 0, modelMatrix, 0);
             Matrix.rotateM(viewMatrix, 0, yRotation, 1.0f, 0.0f, 0.0f);
             Matrix.rotateM(viewMatrix, 0, xRotation, 0.0f, 1.0f, 0.0f);
             Matrix.translateM(viewMatrix, 0, -centerX, -centerY, -centerZ);
@@ -985,8 +997,8 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
                 } else { // حالت 3 بعدی - بدون تغییر
                     if (isZoom) {
                         this.zoom += deltaY * 0.1f;
-                        float minZoom = -25f;
-                        float maxZoom = -5f;
+                        float minZoom = -250f;
+                        float maxZoom = 1000f;
                         this.zoom = Math.max(minZoom, Math.min(zoom, maxZoom));
                         Log.d(TAG, "3D Zoom in touch: zoom=" + zoom);
                     } else {

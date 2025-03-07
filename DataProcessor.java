@@ -29,7 +29,7 @@ public class DataProcessor {
 
     // محدوده‌ی جدید برای نرمال‌سازی
     private final float NORMALIZED_MIN = 0.0f;
-    public final float NORMALIZED_MAX = 10.0f;
+    public final float NORMALIZED_MAX = 1000.0f;
 
     public DataProcessor(Mode mode, int scanThreshold) {
         this.mode = mode;
@@ -106,7 +106,6 @@ public class DataProcessor {
 
     // تابع کمکی برای نرمال‌سازی به محدوده جدید
     private float normalizeToNewRange(float value) {
-
         return (value * NORMALIZED_MAX) / DATA_MAX;
     }
 
