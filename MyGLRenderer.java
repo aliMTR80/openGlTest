@@ -828,16 +828,7 @@ public class MyGLRenderer implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.setIdentityM(viewMatrix, 0);
         Matrix.translateM(viewMatrix, 0, 0f, 0f, zoom);
-
-
-
         if (!is2DMode) {
-            // اعمال مقیاس‌بندی Z
-            float scaleZ = 0.015f; // مقدار مقیاس‌بندی برای محور Z
-            float[] scaleMatrix = new float[16];
-            Matrix.setIdentityM(scaleMatrix, 0);
-            Matrix.scaleM(scaleMatrix, 0, 1f, 1f, scaleZ);
-            Matrix.multiplyMM(modelMatrix, 0, scaleMatrix, 0, modelMatrix, 0);
 
             // محاسبه ماتریس نهایی MVP
             Matrix.multiplyMM(mvpMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
