@@ -1,5 +1,6 @@
-package com.okm.roveruc;
+package com.novinsadr.myapplication;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -12,6 +13,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -38,6 +41,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -106,7 +112,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
             if ("android.bluetooth.device.action.FOUND".equals(action)) {
                 BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra("android.bluetooth.device.extra.DEVICE");
                 if (device != null) {
-                    String Name = device.getName();
+                    @SuppressLint("MissingPermission") String Name = device.getName();
                     if (Name.equals("OKM Rover UC")) {
                         HelloAndroid.this.mmBluetoothAddresses.add(device.getAddress());
                         return;
@@ -246,9 +252,19 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
         if (this.EnableBluetooth) {
             this.mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             if (this.mBluetoothAdapter == null) {
-                Toast.makeText(this, getString(R.string.Bluetooth_NotAvailable), 1).show();
+                Toast.makeText(this, getString(R.string.Bluetooth_NotAvailable), Toast.LENGTH_LONG).show();
                 setResult(0);
                 finish();
+                return;
+            }
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
                 return;
             }
             this.mBluetoothAdapter.setName("OKM-Rover-UC");
@@ -267,6 +283,16 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                 new AlertDialog.Builder(this).setTitle(R.string.MessageBox_Bluetooth).setMessage(R.string.Bluetooth_TurnOn).setPositiveButton(R.string.Button_Yes, new DialogInterface.OnClickListener() { // from class: com.okm.roveruc.HelloAndroid.4
                     @Override // android.content.DialogInterface.OnClickListener
                     public void onClick(DialogInterface dialog, int which) {
+                        if (ActivityCompat.checkSelfPermission(HelloAndroid.this, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+                        }
                         if (!HelloAndroid.this.mBluetoothAdapter.enable()) {
                             Intent enableIntent = new Intent("android.bluetooth.adapter.action.REQUEST_ENABLE");
                             HelloAndroid.this.startActivityForResult(enableIntent, 2);
@@ -294,8 +320,8 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
         this.mSettingsData = new SettingsData(this);
         this.mSettingsData.LoadFromFile();
         this.mHandler = new Handler(this);
-        this.mVibrator = (Vibrator) getSystemService("vibrator");
-        this.mLocationManager = (LocationManager) getSystemService("location");
+        this.mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        this.mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         this.mSoundPool = new SoundPool(2, 3, 0);
         setVolumeControlStream(3);
         Intent startIntent = getIntent();
@@ -309,7 +335,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
         this.mScanDataObject.setImpulses(this.mSettingsData.Impulses);
         this.mScanDataObject.setZigZag(this.mSettingsData.ScanMode_ZigZag);
         this.mScanDataObject.isAutomatic(this.mSettingsData.ImpulseMode_Automatic);
-        setRequestedOrientation(MSG_HIDE_DIALOG_GROUNDSCAN_NEXTLINE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
         this.mRenderer = new ScanRenderer3D();
         this.mRenderer.setScanDataObject(this.mScanDataObject);
         this.mGLSurfaceView = new GLSurfaceView(this);
@@ -325,7 +351,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
     @Override // android.app.Activity
     protected void onStart() {
         super.onStart();
-        InitBluetooth();
+//        InitBluetooth();
         onResume();
     }
 
@@ -403,43 +429,43 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
         return true;
     }
 
-    @Override // android.app.Activity
-    public boolean onOptionsItemSelected(MenuItem item) {
-        super.onOptionsItemSelected(item);
-        switch (item.getItemId()) {
-            case R.id.item01 /* 2131296276 */:
-                Intent startIntent = new Intent(this, (Class<?>) Settings.class);
-                Bundle startBundle = new Bundle();
-                startBundle.putByte("caller", (byte) 4);
-                startIntent.putExtras(startBundle);
-                startActivity(startIntent);
-                finish();
-                return true;
-            case R.id.item06 /* 2131296277 */:
-                Intent startIntent2 = new Intent(this, (Class<?>) FileExplorer.class);
-                Bundle startBundle2 = new Bundle();
-                startBundle2.putByte("caller", (byte) 4);
-                startIntent2.putExtras(startBundle2);
-                startActivity(startIntent2);
-                finish();
-                return true;
-            case R.id.item05 /* 2131296278 */:
-                this.mHandler.sendEmptyMessage(999);
-                return true;
-            case R.id.item04 /* 2131296279 */:
-                this.mScanDataObject.ResetTransformation();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
+//    @Override // android.app.Activity
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        super.onOptionsItemSelected(item);
+//        switch (item.getItemId()) {
+//            case R.id.item01 /* 2131296276 */:
+//                Intent startIntent = new Intent(this,  Settings.class);
+//                Bundle startBundle = new Bundle();
+//                startBundle.putByte("caller", (byte) 4);
+//                startIntent.putExtras(startBundle);
+//                startActivity(startIntent);
+//                finish();
+//                return true;
+//            case R.id.item06 /* 2131296277 */:
+//                Intent startIntent2 = new Intent(this,FileExplorer.class);
+//                Bundle startBundle2 = new Bundle();
+//                startBundle2.putByte("caller", (byte) 4);
+//                startIntent2.putExtras(startBundle2);
+//                startActivity(startIntent2);
+//                finish();
+//                return true;
+//            case R.id.item05 /* 2131296278 */:
+//                this.mHandler.sendEmptyMessage(999);
+//                return true;
+//            case R.id.item04 /* 2131296279 */:
+//                this.mScanDataObject.ResetTransformation();
+//                return true;
+//            default:
+//                return super.onOptionsItemSelected(item);
+//        }
+//    }
 
     @Override // android.app.Activity
     public void onBackPressed() {
         super.onBackPressed();
         this.isAborted = true;
-        Intent startIntent = new Intent(this, (Class<?>) MainMenu.class);
-        startIntent.setFlags(65536);
+        Intent startIntent = new Intent(this, MainMenu.class);
+        startIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         startIntent.putExtra("Lcheck", false);
         startActivity(startIntent);
         finish();
@@ -503,6 +529,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
             ConnectToBluetoothProbe(HelloAndroid.this.mSettingsData.BluetoothAddress);
         }
 
+        @SuppressLint("MissingPermission")
         private synchronized boolean ConnectToBluetoothProbe(String MyBluetoothAddress) {
             boolean z = true;
             synchronized (this) {
@@ -514,7 +541,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                     HelloAndroid.this.MY_UUID = new UUID(0L, 0L);
                     HelloAndroid.this.MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
                     try {
-                        BluetoothSocket tmp = HelloAndroid.this.mBluetoothDevice.createInsecureRfcommSocketToServiceRecord(HelloAndroid.this.MY_UUID);
+                        @SuppressLint("MissingPermission") BluetoothSocket tmp = HelloAndroid.this.mBluetoothDevice.createInsecureRfcommSocketToServiceRecord(HelloAndroid.this.MY_UUID);
                         try {
                             this.mmSocket = tmp;
                             try {
@@ -672,7 +699,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                         this.SensorValue = getDiffSensorExt(65000.0f);
                         if (!Float.isNaN(this.SensorValue)) {
                             if (HelloAndroid.this.mLocationManager != null) {
-                                Location location = HelloAndroid.this.mLocationManager.getLastKnownLocation("gps");
+                                @SuppressLint("MissingPermission") Location location = HelloAndroid.this.mLocationManager.getLastKnownLocation("gps");
                                 if (HelloAndroid.this.mLocationManager.isProviderEnabled("gps") && location != null) {
                                     quality = location.getAccuracy();
                                     longitude = location.getLongitude();
@@ -842,14 +869,14 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                     }
                 });
                 break;
-            case MSG_HIDE_DIALOG_GROUNDSCAN_NEXTLINE /* 4 */:
+            case MSG_HIDE_DIALOG_GROUNDSCAN_NEXTLINE :
                 if (this.mAlertDialog != null && this.mAlertDialog.isShowing()) {
                     this.mAlertDialog.dismiss();
                     this.mScanDataObject.Continue();
                     break;
                 }
                 break;
-            case MSG_SHOW_DIALOG_GROUNDSCAN_SAVE /* 5 */:
+            case MSG_SHOW_DIALOG_GROUNDSCAN_SAVE :
                 this.isAborted = true;
                 ShowYesNoBox(R.drawable.save, null, getString(R.string.GroundScan_SaveScanTitle), getString(R.string.GroundScan_SaveScan), new DialogInterface.OnClickListener() { // from class: com.okm.roveruc.HelloAndroid.12
                     @Override // android.content.DialogInterface.OnClickListener
@@ -858,19 +885,19 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                     }
                 }, null);
                 break;
-            case MSG_HIDE_DIALOG_GROUNDSCAN_SAVE /* 6 */:
+            case MSG_HIDE_DIALOG_GROUNDSCAN_SAVE :
                 if (this.mAlertDialog != null && this.mAlertDialog.isShowing()) {
                     this.mAlertDialog.dismiss();
                     break;
                 }
                 break;
-            case MSG_SHOW_DIALOG_BLUETOOTH_CONNECTING /* 7 */:
+            case MSG_SHOW_DIALOG_BLUETOOTH_CONNECTING :
                 showDialog(1);
                 break;
-            case MSG_HIDE_DIALOG_BLUETOOTH_CONNECTING /* 8 */:
+            case MSG_HIDE_DIALOG_BLUETOOTH_CONNECTING :
                 removeDialog(1);
                 break;
-            case MSG_SHOW_DIALOG_BLUETOOTH_FAILED /* 9 */:
+            case MSG_SHOW_DIALOG_BLUETOOTH_FAILED :
                 try {
                     this.DiscoveryStarted = false;
                     removeDialog(0);
@@ -921,7 +948,7 @@ public class HelloAndroid extends Activity implements Handler.Callback, SensorEv
                 }
             case 999:
                 Context mContext = getApplicationContext();
-                LayoutInflater inflater = (LayoutInflater) mContext.getSystemService("layout_inflater");
+                LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 View layout = inflater.inflate(R.layout.savedialog, (ViewGroup) findViewById(R.id.layout_root));
                 this.edit = (EditText) layout.findViewById(R.id.EditText01);
                 this.edit.setText(DateFormat.format("yyyy-MM-dd kk.mm.ss", new Date()));
